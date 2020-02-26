@@ -1,0 +1,10 @@
+App\Command\CreateWarriorCommand:
+  properties:
+    name:
+      - NotBlank: ~
+    region:
+        - NotBlank: ~
+    battleTactics:
+      - NotBlank: ~
+    armament:
+      - NotBlank: ~

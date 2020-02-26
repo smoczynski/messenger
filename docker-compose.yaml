@@ -1,0 +1,88 @@
+version: '3'
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  db-mysql:
+  nginx-logs:
+
+services:
+  # INFRASTRUCTURE SERVICES
+  http:
+    container_name: messenger_http
+    build: docker/http
+    networks:
+      default:
+        aliases:
+          - ${APP_DOMAIN}
+          - ${QUEUE_DOMAIN}
+    environment:
+      - APP_DOMAIN=${APP_DOMAIN}
+      - QUEUE_DOMAIN=${QUEUE_DOMAIN}
+    command: sh /bin/run-nginx.sh
+    depends_on:
+      - app
+    ports:
+      - 80:80
+    expose:
+      - 80
+    volumes:
+      - nginx-logs:/var/log/nginx:cached
+      - ./:/opt/app:cached
+    working_dir: /etc/nginx
+    tty: true
+
+  db:
+    container_name: messenger_mysql
+    image: mysql:5.7
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+    ports:
+      - 3306:3306
+    networks:
+      default:
+        aliases:
+          - mysql.localhost
+    volumes:
+      - db-mysql:/var/lib/mysql
+    tty: true
+
+  # DOMAIN SERVICES
+  app:
+    container_name: messenger_app
+    build: docker/app
+    depends_on:
+      - db
+    networks:
+      - default
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=mysql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?serverVersion=5.7
+      - QUEUE_URL=amqp://${QUEUE_USER}:${QUEUE_PASSWORD}@${QUEUE_HOST}:${QUEUE_PORT}/${QUEUE_VHOST}?lazy=1&connection_timeout=6
+    volumes:
+      - ./:/opt/app:cached
+    working_dir: /opt/app
+    tty: true
+
+  cache:
+    container_name: messenger_cache
+    image: redis:5
+
+  queue:
+    container_name: messenger_queue
+    image: rabbitmq:3.8.2-management
+    ports:
+      - 15672:15672
+    networks:
+      default:
+        aliases:
+          - ${QUEUE_HOST}
+    environment:
+      - RABBITMQ_DEFAULT_USER=${QUEUE_USER}
+      - RABBITMQ_DEFAULT_PASS=${QUEUE_PASSWORD}
+      - RABBITMQ_DEFAULT_VHOST=${QUEUE_VHOST}
+

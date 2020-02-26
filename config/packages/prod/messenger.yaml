@@ -1,0 +1,8 @@
+framework:
+  messenger:
+    buses:
+      query.bus:
+        middleware:
+          - 'App\Middleware\LoggingMiddleware'
+          - 'App\Middleware\CachingMiddleware'
+

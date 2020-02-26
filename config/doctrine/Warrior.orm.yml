@@ -1,0 +1,23 @@
+App\Entity\Warrior:
+  type: entity
+  table: warrior
+  repositoryClass: App\Repository\WarriorRepository
+  id:
+    id:
+      type: uuid
+  fields:
+    name:
+      type: string
+      nullable: false
+    region:
+      type: string
+      nullable: false
+    battleTactics:
+      type: string
+      nullable: false
+    armament:
+      type: string
+      nullable: false
+    createdAt:
+      type: datetime
+      nullable: false

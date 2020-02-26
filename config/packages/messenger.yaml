@@ -1,0 +1,28 @@
+framework:
+    messenger:
+        # Uncomment this (and the failed transport below) to send failed messages
+        # to this transport for later handling.
+        # failure_transport: failed
+
+        transports:
+            sync: 'sync://'
+            async:
+                dsn: "%env(QUEUE_URL)%"
+                serializer: messenger.transport.symfony_serializer
+                retry_strategy:
+                    max_retries: 3
+
+        routing:
+            'App\Command\CreateWarriorCommand': async
+
+        default_bus: command.bus
+        buses:
+            command.bus:
+                middleware:
+                    - 'App\Middleware\ValidationMiddleware'
+                    - 'App\Middleware\LoggingMiddleware'
+                    - 'doctrine_transaction'
+            query.bus:
+                middleware:
+                    - 'App\Middleware\LoggingMiddleware'
+
